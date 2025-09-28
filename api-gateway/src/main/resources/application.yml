@@ -22,12 +22,12 @@ spring:
                 - Path=/api/user/**
               filters:
                 - RewritePath=/api/user/(?<segment>.*), /api/user/${segment}
-#            - id: task-service
-#              uri: lb://task-service
-#              predicates:
-#                - Path=/api/task/**
-#              filters:
-#                - RewritePath=/api/task/(?<segment>.*), /api/task/${segment}
+            - id: task-service
+              uri: lb://task-service
+              predicates:
+                - Path=/api/task/**
+              filters:
+                - RewritePath=/api/task/(?<segment>.*), /api/task/${segment}
 
 springdoc:
   swagger-ui:
@@ -36,8 +36,8 @@ springdoc:
         name: Auth Service
       - url: /api/user/v3/api-docs
         name: User Service
-#      - url: /api/task/v3/api-docs
-#        name: Task Service
+      - url: /api/task/v3/api-docs
+        name: Task Service
 
 logging:
   level:
