@@ -14,8 +14,7 @@ import lombok.*;
 public class UserAuth {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
+    private String userId;
 
     private String username;
 

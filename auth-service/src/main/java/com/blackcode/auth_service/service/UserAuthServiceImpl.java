@@ -1,8 +1,10 @@
 package com.blackcode.auth_service.service;
 
 import com.blackcode.auth_service.dto.*;
+import com.blackcode.auth_service.exception.ExternalServiceException;
 import com.blackcode.auth_service.exception.TokenRefreshException;
 import com.blackcode.auth_service.exception.UsernameAlreadyExistsException;
+import com.blackcode.auth_service.helper.TypeRefs;
 import com.blackcode.auth_service.model.RefreshToken;
 import com.blackcode.auth_service.model.Token;
 import com.blackcode.auth_service.model.UserAuth;
@@ -12,9 +14,14 @@ import com.blackcode.auth_service.security.jwt.JwtUtils;
 import com.blackcode.auth_service.security.service.UserAuthDetailsImpl;
 import com.blackcode.auth_service.security.service.UserAuthRefreshTokenService;
 import com.blackcode.auth_service.security.service.UserAuthTokenService;
+import com.blackcode.auth_service.utils.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,8 +30,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 @Service
 public class UserAuthServiceImpl implements UserAuthService{
@@ -45,13 +57,18 @@ public class UserAuthServiceImpl implements UserAuthService{
 
     private final UserAuthRefreshTokenService userAuthRefreshTokenService;
 
+    private static final String USER_API_PATH = "/api/department/getDepartmentById/";
+
+    private final WebClient userClient;
+
     public UserAuthServiceImpl(PasswordEncoder encoder,
                                AuthenticationManager authenticationManager,
                                UserAuthRepository userAuthRepository,
                                TokenRepository tokenRepository,
                                UserAuthTokenService userAuthTokenService,
                                JwtUtils jwtUtils,
-                               UserAuthRefreshTokenService userAuthRefreshTokenService) {
+                               UserAuthRefreshTokenService userAuthRefreshTokenService,
+                               @Qualifier("userClient") WebClient userClient) {
         this.encoder = encoder;
         this.authenticationManager = authenticationManager;
         this.userAuthRepository = userAuthRepository;
@@ -59,6 +76,7 @@ public class UserAuthServiceImpl implements UserAuthService{
         this.userAuthTokenService = userAuthTokenService;
         this.jwtUtils = jwtUtils;
         this.userAuthRefreshTokenService = userAuthRefreshTokenService;
+        this.userClient = userClient;
     }
 
     @Override
@@ -89,20 +107,78 @@ public class UserAuthServiceImpl implements UserAuthService{
         );
     }
 
+    @Transactional
     @Override
     public MessageRes signUp(SignUpReq signUpReq) {
         System.out.println("username : "+signUpReq.getUsername());
         if(userAuthRepository.existsByUsername(signUpReq.getUsername())){
             throw new UsernameAlreadyExistsException("Username is already taken!");
         }
+        UserAuth authUser = new UserAuth();
+        authUser.setUserId(UUID.randomUUID().toString());
+        authUser.setUsername(signUpReq.getUsername());
+        authUser.setPassword(encoder.encode(signUpReq.getPassword()));
 
-        UserAuth userAuth = new UserAuth(
-                signUpReq.getUsername(),
-                encoder.encode(signUpReq.getPassword()));
+        UserAuth savedUser = userAuthRepository.save(authUser);
 
-        userAuthRepository.save(userAuth);
-        return new MessageRes("Success Register Petugas");
+        fetchUser(savedUser, signUpReq);
+
+        return new MessageRes("User created: " + savedUser.getUserId());
     }
+
+    private UserRes fetchUser(UserAuth userAuth, SignUpReq signUpReq){
+        UserReq request = new UserReq();
+        request.setUserId(userAuth.getUserId());
+        request.setNama(signUpReq.getNama());
+        request.setEmail(signUpReq.getEmail());
+        request.setAddressId(signUpReq.getAddressId());
+        request.setDepartmentId(signUpReq.getDepartmentId());
+
+        return fetchExternalData(
+                userClient,
+                USER_API_PATH,
+                TypeRefs.userDtoResponse(),
+                request,
+                "user-service"
+        );
+    }
+
+
+    private <T> T fetchExternalData(WebClient client, String uri, ParameterizedTypeReference<ApiResponse<T>> typeRef, UserReq userReq, String dataType){
+        try {
+            ApiResponse<T> response = client.post()
+                    .uri(uri)
+                    .bodyValue(userReq)
+                    .retrieve()
+                    .onStatus(
+                            status -> status == HttpStatus.NOT_FOUND,
+                            clientResponse -> Mono.error(new ExternalServiceException("Internal error on " + dataType))
+                    )
+                    .bodyToMono(typeRef)
+                    .timeout(Duration.ofSeconds(3))
+                    .onErrorResume(e -> {
+                        logger.warn("{} not found for : {}", dataType, e.getMessage());
+                        return Mono.error(e);
+                    })
+                    .block();
+            if (response == null) {
+                logger.warn("No response received for {}", dataType);
+                throw new ExternalServiceException("No response received from " + dataType);
+            }
+            return response.getData();
+
+        }catch (RuntimeException e) {
+            if (e.getCause() instanceof TimeoutException) {
+                logger.error("Timeout fetching {}: {}", dataType, e.getMessage());
+                throw new ExternalServiceException("Timeout when calling " + dataType, e);
+            }
+            throw e;
+        }catch (Exception e){
+            logger.error("Unexpected error fetching {}: {}", dataType, e.getMessage());
+            throw new ExternalServiceException("Unexpected error calling " + dataType, e);
+        }
+    }
+
 
     @Override
     public TokenRefreshRes refreshToken(TokenRefreshReq request) {

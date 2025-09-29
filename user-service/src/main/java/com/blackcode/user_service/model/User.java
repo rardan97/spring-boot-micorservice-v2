@@ -13,15 +13,14 @@ import lombok.*;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String userId;
 
     private String nama;
 
     private String email;
 
-    private String department;
+    private Long departmentId;
 
-    private String address;
+    private Long addressId;
 
 }

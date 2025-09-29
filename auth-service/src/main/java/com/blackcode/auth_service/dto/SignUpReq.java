@@ -21,4 +21,12 @@ public class SignUpReq {
     @Size(min = 3, max = 40)
     private String password;
 
+    private String nama;
+
+    private String email;
+
+    private Long departmentId;
+
+    private Long addressId;
+
 }

@@ -16,12 +16,28 @@ spring:
                 - Path=/api/auth/**
               filters:
                 - RewritePath=/api/auth/(?<segment>.*), /api/auth/${segment}
+
             - id: user-service
               uri: lb://user-service
               predicates:
                 - Path=/api/user/**
               filters:
                 - RewritePath=/api/user/(?<segment>.*), /api/user/${segment}
+
+            - id: address-service
+              uri: lb://address-service
+              predicates:
+                - Path=/api/address/**
+              filters:
+                - RewritePath=/api/address/(?<segment>.*), /api/address/${segment}
+
+            - id: department-service
+              uri: lb://department-service
+              predicates:
+                - Path=/api/department/**
+              filters:
+                - RewritePath=/api/department/(?<segment>.*), /api/department/${segment}
+
             - id: task-service
               uri: lb://task-service
               predicates:
@@ -34,8 +50,16 @@ springdoc:
     urls:
       - url: /api/auth/v3/api-docs
         name: Auth Service
+
       - url: /api/user/v3/api-docs
         name: User Service
+
+      - url: /api/address/v3/api-docs
+        name: Address Service
+
+      - url: /api/department/v3/api-docs
+        name: Department Service
+        
       - url: /api/task/v3/api-docs
         name: Task Service
 
