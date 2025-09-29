@@ -6,7 +6,7 @@ import com.blackcode.task_service.utils.ApiResponse;
 import org.springframework.core.ParameterizedTypeReference;
 
 public class TypeRefs {
-    public static ParameterizedTypeReference<ApiResponse<UserDto>> departmentDtoResponse() {
+    public static ParameterizedTypeReference<ApiResponse<UserDto>> userDtoResponse() {
         return new ParameterizedTypeReference<>() {};
     }
 
