@@ -22,6 +22,7 @@ This project implements a microservices architecture using:
 - user-service – Manages user data
 - department-service – Manages department data
 - address-service – Manages address data
+- task-service – Manages address data
 
 
 ## Dependencies
@@ -42,10 +43,12 @@ This project implements a microservices architecture using:
 - `spring-cloud-starter-netflix-eureka-server`  
 - `spring-boot-starter-actuator`
 
-### Service-User
+### Service-Auth
 - `spring-boot-starter-web`  
 - `spring-boot-starter-data-jpa`
 - `spring-boot-starter-security`
+- `spring-boot-starter-webflux`
+- `spring-cloud-starter-loadbalancer`
 - `spring-cloud-starter-netflix-eureka-client`
 - `springdoc-openapi-starter-webmvc-ui`
 - `postgresql`  
@@ -65,18 +68,38 @@ This project implements a microservices architecture using:
 - `postgresql`  
 - `lombok`  
 
-### Service-Task
+### Service-Department
 - `spring-boot-starter-web`  
 - `spring-boot-starter-data-jpa`  
 - `spring-cloud-starter-netflix-eureka-client`
 - `springdoc-openapi-starter-webmvc-ui`
 - `postgresql`  
-- `lombok` 
+- `lombok`  
+
+### Service-Address
+- `spring-boot-starter-web`  
+- `spring-boot-starter-data-jpa`  
+- `spring-cloud-starter-netflix-eureka-client`
+- `springdoc-openapi-starter-webmvc-ui`
+- `postgresql`  
+- `lombok`  
+
+### Service-Task
+- `spring-boot-starter-web`  
+- `spring-boot-starter-data-jpa`
+- `spring-boot-starter-webflux`  
+- `spring-cloud-starter-netflix-eureka-client`
+- `spring-cloud-starter-loadbalancer`
+- `springdoc-openapi-starter-webmvc-ui`
+- `postgresql`  
+- `lombok`  
 
 ## Database
 Each service has its own separate PostgreSQL database:
 - authdb
 - userdb
+- departmentdb
+- addressdb
 - taskdb
 
 
@@ -103,12 +126,28 @@ spring:
                 - Path=/api/auth/**
               filters:
                 - RewritePath=/api/auth/(?<segment>.*), /api/auth/${segment}
+
             - id: user-service
               uri: lb://user-service
               predicates:
                 - Path=/api/user/**
               filters:
                 - RewritePath=/api/user/(?<segment>.*), /api/user/${segment}
+            
+            - id: department-service
+              uri: lb://department-service
+              predicates:
+                - Path=/api/department/**
+              filters:
+                - RewritePath=/api/department/(?<segment>.*), /api/department/${segment}
+
+            - id: address-service
+              uri: lb://address-service
+              predicates:
+                - Path=/api/address/**
+              filters:
+                - RewritePath=/api/address/(?<segment>.*), /api/address/${segment}
+
             - id: task-service
               uri: lb://task-service
               predicates:
@@ -121,8 +160,16 @@ springdoc:
     urls:
       - url: /api/auth/v3/api-docs
         name: Auth Service
+
       - url: /api/user/v3/api-docs
         name: User Service
+
+      - url: /api/department/v3/api-docs
+        name: Department Service
+
+      - url: /api/address/v3/api-docs
+        name: Address Service
+
       - url: /api/task/v3/api-docs
         name: Task Service
 
@@ -130,12 +177,14 @@ logging:
   level:
     org.springframework.cloud.gateway: DEBUG
 
+
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eurekaserver:8761/eureka/}
     register-with-eureka: true
     fetch-registry: true
+
 ```
 
 ### eureka-server (application.yml)
@@ -249,6 +298,104 @@ eureka:
 
 ```
 
+### department-service (application.yml)
+```yaml
+server:
+  port: 8083
+
+spring:
+  application:
+    name: department-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+springdoc:
+  api-docs:
+    path: /api/department/v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eurekaserver:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+```
+
+### address-service (application.yml)
+```yaml
+server:
+  port: 8084
+
+spring:
+  application:
+    name: address-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+springdoc:
+  api-docs:
+    path: /api/address/v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eurekaserver:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+```
+
+### task-service (application.yml)
+```yaml
+server:
+  port: 8085
+
+spring:
+  application:
+    name: task-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+springdoc:
+  api-docs:
+    path: /api/task/v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eurekaserver:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+
+```
+
+
 ### task-service (application.yml)
 ```yaml
 
@@ -286,6 +433,67 @@ http://localhost:8080/swagger-ui/index.html
 
 All requests are sent through the API Gateway at:
 ```
-http://localhost:8080.
+http://localhost:8080
 ```
 
+### Service: Auth 
+
+Base URL: `http://localhost:8080/api/auth/signup`
+
+| Method | Endpoint                 | Description         |
+|--------|--------------------------|---------------------|
+| POST   | `/signup`                | Registration User   |
+| POST   | `/signin`                | Login User          |
+| POST   | `/refreshtoken`          | Refresh Token       |
+| POST   | `/signout`               | Logout User         |
+
+
+### Service: Address 
+
+Base URL: `http://localhost:8080/api/address`
+
+| Method | Endpoint                 | Description         |
+|--------|--------------------------|---------------------|
+| GET    | `/getAllAddress`         | Get all addresses   |
+| GET    | `/getAddressById/{id}`   | Get address by ID   |
+| POST   | `/addAddress`            | Create new address  |
+| PUT    | `/updateAddress/{id}`    | Update address      |
+| DELETE | `/deleteAddress/{id}`    | Delete address      |
+
+
+### Service: Department 
+
+Base URL: `http://localhost:8080/api/department`
+
+| Method | Endpoint                    | Description          |
+|--------|-----------------------------|----------------------|
+| GET    | `/getAllDepartment`         | Get all departments  |
+| GET    | `/getDepartmentById/{id}`   | Get department by ID |
+| POST   | `/addDepartment`            | Create new department|
+| PUT    | `/updateDepartment/{id}`    | Update department    |
+| DELETE | `/deleteDepartment/{id}`    | Delete department    |
+
+
+### Service: User
+
+Base URL: `http://localhost:8080/api/user`
+
+| Method | Endpoint              | Description      |
+|--------|-----------------------|------------------|
+| GET    | `/getAllUser`         | Get all users    |
+| GET    | `/getUserById/{id}`   | Get user by ID   |
+| PUT    | `/updateUser/{id}`    | Update user      |
+| DELETE | `/deleteUser/{id}`    | Delete user      |
+
+
+### Service: Task
+
+Base URL: `http://localhost:8080/api/task`
+
+| Method | Endpoint              | Description      |
+|--------|-----------------------|------------------|
+| GET    | `/getAllTask`         | Get all task     |
+| GET    | `/getTaskById/{id}`   | Get task by ID   |
+| POST   | `/addTask`            | Create new task  |
+| PUT    | `/updateTask/{id}`    | Update task      |
+| DELETE | `/deleteTask/{id}`    | Delete task      |
