@@ -2,6 +2,7 @@ package com.blackcode.user_service.service;
 
 import com.blackcode.user_service.dto.UserReq;
 import com.blackcode.user_service.dto.UserRes;
+import com.blackcode.user_service.dto.UserResSyn;
 
 import java.util.List;
 import java.util.Map;
@@ -10,12 +11,12 @@ public interface UserService {
 
     List<UserRes> getAllUser();
 
-    UserRes getUserById(Long userId);
+    UserRes getUserById(String userId);
 
-    UserRes addUser(UserReq userReq);
+    UserResSyn addUser(UserReq userReq);
 
-    UserRes updateUser(Long userId, UserReq userReq);
+    UserRes updateUser(String userId, UserReq userReq);
 
-    Map<String, Object> deleteUser(Long userId);
+    Map<String, Object> deleteUser(String userId);
 
 }

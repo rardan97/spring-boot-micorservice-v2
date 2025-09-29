@@ -1,9 +1,6 @@
 package com.blackcode.user_service.service;
 
-import com.blackcode.user_service.dto.AddressDto;
-import com.blackcode.user_service.dto.DepartmentDto;
-import com.blackcode.user_service.dto.UserReq;
-import com.blackcode.user_service.dto.UserRes;
+import com.blackcode.user_service.dto.*;
 import com.blackcode.user_service.exception.DataNotFoundException;
 import com.blackcode.user_service.helper.TypeRefs;
 import com.blackcode.user_service.model.User;
@@ -11,6 +8,7 @@ import com.blackcode.user_service.repository.UserRepository;
 import com.blackcode.user_service.utils.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,17 +29,20 @@ public class UserServiceImpl implements UserService{
 
     private static final String ADDRESS_API_PATH = "/api/address/getAddressById/";
 
+    private final UserRepository userRepository;
+
     private final WebClient departmentClient;
 
     private final WebClient addressClient;
 
-    private final UserRepository userRepository;
-
-    public UserServiceImpl(WebClient departmentClient, WebClient addressClient, UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository,
+                           @Qualifier("departmentClient") WebClient departmentClient,
+                           @Qualifier("addressClient") WebClient addressClient) {
+        this.userRepository = userRepository;
         this.departmentClient = departmentClient;
         this.addressClient = addressClient;
-        this.userRepository = userRepository;
     }
+
 
     @Override
     public List<UserRes> getAllUser() {
@@ -54,9 +55,9 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public UserRes getUserById(Long userId) {
-        User user = userRepository.findById(userId.toString())
-                .orElseThrow(() -> new DataNotFoundException("User not found with ID: "+userId.toString()));
+    public UserRes getUserById(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new DataNotFoundException("User not found with ID: "+userId));
 
         DepartmentDto department = fetchDepartmentById(user.getDepartmentId());
         AddressDto address = fetchAddressById(user.getAddressId());
@@ -64,19 +65,21 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public UserRes addUser(UserReq userReq) {
+    public UserResSyn addUser(UserReq userReq) {
         User user = new User();
+        user.setUserId(userReq.getUserId());
         user.setNama(userReq.getNama());
         user.setEmail(userReq.getEmail());
         user.setDepartmentId(userReq.getDepartmentId());
         user.setAddressId(userReq.getAddressId());
         User saveUser = userRepository.save(user);
-        return mapToUserResOnly(saveUser);
+
+        return mapToUserResSyn(saveUser);
     }
 
     @Override
-    public UserRes updateUser(Long userId, UserReq userReq) {
-        User user = userRepository.findById(userId.toString())
+    public UserRes updateUser(String userId, UserReq userReq) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found with ID: "+userId));
 
         user.setNama(userReq.getNama());
@@ -91,10 +94,10 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public Map<String, Object> deleteUser(Long userId) {
-        User user = userRepository.findById(userId.toString())
+    public Map<String, Object> deleteUser(String userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new DataNotFoundException("User not found with ID: "+userId));
-        userRepository.deleteById(userId.toString());
+        userRepository.deleteById(userId);
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("deletedUserId", userId);
         responseData.put("info", "The User was removed from the database.");
@@ -177,11 +180,15 @@ public class UserServiceImpl implements UserService{
         return userRes;
     }
 
-    private UserRes mapToUserResOnly(User user){
-        UserRes userRes = new UserRes();
+    private UserResSyn mapToUserResSyn(User user){
+        UserResSyn userRes = new UserResSyn();
         userRes.setUserId(user.getUserId());
         userRes.setNama(user.getNama());
         userRes.setEmail(user.getEmail());
+        userRes.setAddress(user.getAddressId().toString());
+        userRes.setDepartment(user.getDepartmentId().toString());
         return userRes;
     }
+
+
 }

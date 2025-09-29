@@ -57,7 +57,7 @@ public class UserAuthServiceImpl implements UserAuthService{
 
     private final UserAuthRefreshTokenService userAuthRefreshTokenService;
 
-    private static final String USER_API_PATH = "/api/department/getDepartmentById/";
+    private static final String USER_API_PATH = "/api/user/addUser";
 
     private final WebClient userClient;
 
@@ -90,11 +90,11 @@ public class UserAuthServiceImpl implements UserAuthService{
         UserAuthDetailsImpl userAuthDetails = (UserAuthDetailsImpl) authentication.getPrincipal();
 
         String jwt = jwtUtils.generateJwtTokenUserAuth(userAuthDetails);
-        userAuthTokenService.processUserAuthTokenAdd(Long.valueOf(userAuthDetails.getUserId()), jwt);
+        userAuthTokenService.processUserAuthTokenAdd(userAuthDetails.getUserId(), jwt);
 
         RefreshToken refreshToken = userAuthRefreshTokenService.createRefreshToken(
                 jwt,
-                Long.valueOf(userAuthDetails.getUserId())
+                userAuthDetails.getUserId()
         );
 
         logger.info("User {} signed in successfully", userAuthDetails.getUsername());
@@ -207,7 +207,7 @@ public class UserAuthServiceImpl implements UserAuthService{
             if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
                 String jwtToken = headerAuth.substring(7);
                 UserAuthDetailsImpl userAuthDetails = (UserAuthDetailsImpl) authentication.getPrincipal();
-                Long userId = userAuthDetails.getUserId();
+                String userId = userAuthDetails.getUserId();
 
                 Optional<Token> userTokenData = tokenRepository.findByToken(jwtToken);
                 if (userTokenData.isPresent()) {

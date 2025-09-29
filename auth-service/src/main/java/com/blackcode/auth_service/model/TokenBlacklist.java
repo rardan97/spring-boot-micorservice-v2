@@ -22,7 +22,7 @@ public class TokenBlacklist {
     private String token;
 
     @Column(nullable = false)
-    private Long userId;
+    private String userId;
 
     @Column(nullable = false)
     private Boolean isActive = false;

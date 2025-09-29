@@ -1,4 +1,4 @@
-package com.blackcode.auth_service.dto;
+package com.blackcode.task_service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class UserRes {
+public class UserDto {
 
     private String userId;
 

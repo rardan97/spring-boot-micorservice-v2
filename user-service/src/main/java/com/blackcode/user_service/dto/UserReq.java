@@ -12,6 +12,8 @@ import lombok.Setter;
 @Setter
 public class UserReq {
 
+    private String userId;
+
     private String nama;
 
     private String email;

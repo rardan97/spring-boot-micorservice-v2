@@ -1,4 +1,4 @@
-package com.blackcode.user_service.config;
+package com.blackcode.task_service.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
@@ -18,23 +18,11 @@ public class WebClientConfig {
     }
 
     @Bean
-    @Qualifier("departmentClient")
-    public WebClient departmentWebClient(WebClient.Builder builder) {
+    @Qualifier("userClient")
+    public WebClient userWebClient(WebClient.Builder builder) {
         return builder
-                .baseUrl("lb://department-service")
+                .baseUrl("lb://user-service")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
-
-    @Bean
-    @Qualifier("addressClient")
-    public WebClient addressWebClient(WebClient.Builder builder) {
-        return builder
-                .baseUrl("lb://address-service")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .build();
-    }
-
-
-
 }

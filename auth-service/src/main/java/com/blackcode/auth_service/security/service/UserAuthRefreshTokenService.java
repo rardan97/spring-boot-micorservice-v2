@@ -35,7 +35,7 @@ public class UserAuthRefreshTokenService {
         return refreshTokenRepository.findByToken(token);
     }
 
-    public RefreshToken createRefreshToken(String jwt, Long userId){
+    public RefreshToken createRefreshToken(String jwt, String userId){
         RefreshToken refreshToken = null;
         Optional<RefreshToken> existingToken = refreshTokenRepository.findByUserAuthId(userId);
         if (existingToken.isPresent()) {
@@ -65,7 +65,7 @@ public class UserAuthRefreshTokenService {
     }
 
     @Transactional
-    public void deleteByUserAuthId(Long userId){
+    public void deleteByUserAuthId(String userId){
         refreshTokenRepository.deleteByUserAuth(userAuthRepository.findById(userId).get());
     }
 

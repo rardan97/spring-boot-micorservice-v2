@@ -11,5 +11,4 @@ public class TypeRefs {
         return new ParameterizedTypeReference<>() {};
     }
 
-
 }

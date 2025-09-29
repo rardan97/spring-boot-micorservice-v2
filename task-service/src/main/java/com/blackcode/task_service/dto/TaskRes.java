@@ -1,26 +1,22 @@
-package com.blackcode.task_service.model;
+package com.blackcode.task_service.dto;
 
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-@Table(name = "tb_task")
-public class Task {
+public class TaskRes {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long taskId;
 
     private String taskName;
 
     private String taskDescription;
 
-    private String taskUserId;
+    private UserDto taskUser;
+
 }

@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public interface TokenBlacklistService {
 
-    void addToBlacklist(String token, Long userId, LocalDateTime expiryDate);
+    void addToBlacklist(String token, String userId, LocalDateTime expiryDate);
 
     boolean isTokenBlacklisted(String token);
 

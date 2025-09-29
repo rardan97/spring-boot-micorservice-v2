@@ -30,7 +30,7 @@ public class UserAuthTokenService {
         this.userAuthRepository = userAuthRepository;
     }
 
-    public void processUserAuthTokenAdd(Long userId, String jwt){
+    public void processUserAuthTokenAdd(String userId, String jwt){
         Date date = new Date((new Date()).getTime() + jwtExpirationMs);
         LocalDateTime localDateTime = date.toInstant()
                 .atZone(ZoneId.systemDefault())

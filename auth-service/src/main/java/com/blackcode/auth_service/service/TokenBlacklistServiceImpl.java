@@ -19,7 +19,7 @@ public class TokenBlacklistServiceImpl implements TokenBlacklistService{
 
 
     @Override
-    public void addToBlacklist(String token, Long userId, LocalDateTime expiryDate) {
+    public void addToBlacklist(String token, String userId, LocalDateTime expiryDate) {
         TokenBlacklist tokenBlacklist = new TokenBlacklist();
         tokenBlacklist.setToken(token);
         tokenBlacklist.setUserId(userId);
