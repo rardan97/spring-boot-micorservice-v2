@@ -1,28 +1,87 @@
 # Microservices Architecture: (Spring Boot + PostgreSQL + API Gateway + Eureka Server + JWT Authenticaton + Docker + Swagger)
 
-This project implements a microservices architecture using:
+This project is an implementation of a Microservices Architecture built using modern technologies such as Spring Boot, Spring Cloud, PostgreSQL, Docker, and more.
 
-- Spring Boot (Web & WebFlux)
-- Spring Security
-- PostgreSQL
-- API Gateway (Spring Cloud Gateway)
-- Eureka Server (Service Registry & Discovery)
-- Docker
+One of the key focuses of this architecture is security through authentication and authorization, implemented using JWT (JSON Web Token) via a dedicated service called auth-service.
+Every incoming request is first validated through the API Gateway, ensuring that only authenticated and authorized requests are allowed to access internal services.
+
+## Technologies Used
+- Spring Boot (Web & WebFlux) – Core framework for building services
+- Spring Security – Secures endpoints with JWT authentication
+- PostgreSQL – Database used by each service as needed
+- Spring Cloud Gateway – Handles routing and filtering of HTTP requests
+- Eureka Server – Enables service registration and discovery
+- Docker – Simplifies deployment of services
+- Swagger / OpenAPI – Provides auto-generated API documentation
 
 
 ## Architecture Diagram
---
+<p align="center">
+  <img src="diagram_flow.png" alt="Architecture Diagram" width="700"/>
+</p>
 
 
 
-## Services Overview
-- api-gateway – Routes requests to the appropriate service
-- eureka-server – Service registry (for registration and lookup of services)
-- auth-service - Service for Authentication (Register, login, refresh token, Logout)
-- user-service – Manages user data
-- department-service – Manages department data
-- address-service – Manages address data
-- task-service – Manages address data
+## Microservices Overview
+
+### api-gateway
+
+Serves as the main entry point for all incoming requests to the system, with several key responsibilities:
+
+- Routing: Forwards client requests to the appropriate microservice based on the request path.
+- Security Filter (JWT Validation):
+    - Validates the JWT Token on every incoming request.
+    - Denies access if the token is invalid, expired, or missing.
+
+  - Excludes specific paths from authentication to allow public access, such as:
+      - /auth/signup
+      - /auth/signin
+      - /auth/refreshtoken
+
+- CORS Configuration: Centralized configuration for handling Cross-Origin Resource Sharing (CORS) across services.
+
+### eureka-server
+
+A Service Registry where all services register themselves and discover each other dynamically.
+
+- Main benefits:
+  - Enables dynamic service discovery without the need for static configuration (e.g., hardcoded IPs or ports).
+  - Simplifies horizontal scaling.
+  - Improves overall system resilience and availability.
+
+### auth-service
+
+Handles all Authentication and Authorization operations, including:
+- Register: Create new user accounts.
+- Login: Verify user credentials and issue JWT tokens.
+- Refresh Token: Generate new access tokens without requiring re-login.
+- Logout: Invalidate or remove tokens (optional implementation).
+
+### user-service
+
+Manages user-related data, including:
+- User profiles and personal information
+- Updating user data
+- Relationships with services like department-service and address-service
+
+### department-service
+Provides department-related data that is consumed by user-service to associate users with their respective departments.
+- Responsible for creating, updating, and deleting department records
+- Acts as a centralized data provider for department information
+- user-service retrieves department details via REST communication
+
+### address-service
+Manages address information, which is retrieved by user-service and potentially other services.
+- Provides CRUD operations for address records
+- Serves as the main source of address data in the system
+- user-service integrates with this service to store and fetch user address details
+
+### task-service
+Handles task management functionality, including:
+- Creating and updating tasks
+- Managing task status and progress
+- Linking tasks to users
+- Integrated with other services such as user-service
 
 
 ## Dependencies
